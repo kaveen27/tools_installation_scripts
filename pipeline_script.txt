@@ -1,0 +1,124 @@
+pipeline {
+    agent {
+        label 'soft'
+    }
+    
+    
+    environment {
+        name = 'kavin'
+    }
+    tools {
+        git 'Default'
+    }
+    //  parameters{
+    //     text(name:'devops',defaultValue:'',description:'Enter your name')
+    // //     booleanParam(name: 'DEBUG_BUILD', defaultValue: true, description: '')
+    //      choice(name: 'CHOICES', choices: ['one', 'two', 'three'], description: '')
+    //      choice(name: 'department', choices: ['build', 'test', 'release'], description: '') 
+    //     password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'A secret password') 
+        
+    //  }
+    
+    options {
+        retry(1)
+        buildDiscarder(logRotator(numToKeepStr: '3'))
+        disableConcurrentBuilds() 
+        timeout(time: 1, unit: 'MINUTES')
+        timestamps()
+        
+    }
+     
+    triggers {
+        // cron('* * * * *')
+        pollSCM('* * * * *') 
+        
+    }    
+    
+
+   
+
+    stages {
+        stage('Clone Git Repository') {
+            steps {
+                // Clone the Git repository
+                git branch: 'main', url: 'https://github.com/kaveen27/tools_installation_scripts.git'
+                sh 'chmod +x demo.sh'
+                sh './demo.sh'
+                
+            }
+        }
+    
+        
+        stage('try_catch'){
+            
+            // when {
+            //     expression { params.CHOICES == 'one' }
+            // }
+            steps{
+                script{
+                    try{
+                    sh 'exit 1'
+                    
+                }
+                    catch (exc){
+                    echo "someting is wrong"
+                }
+                }
+                
+            }
+        }
+        stage("parallel execution"){
+            
+            // when {
+            //     expression { params.CHOICES == 'two' }
+            // }
+            parallel{
+                stage('Build') {
+                    
+            //         when {
+            //     expression { params.department == 'build' }
+            // }
+                    steps {
+                        echo " hello pradeep"
+                        echo "checking the pollSCM"
+                        print name 
+                        print BUILD_NUMBER
+                        print BUILD_ID
+                        sleep 30
+                
+            }
+        }
+                stage ('test'){
+            //         when {
+            //     expression { params.department == 'test' }
+            // }
+                    steps{
+                        echo"job 2"
+                        sleep 30
+                    }
+                }             
+                
+                stage ('release'){
+            //         when {
+            //     expression { params.department == 'release' }
+            // }
+                    steps{
+                        echo"job 3"
+                        sleep 30
+                        
+                    }
+                }
+                        
+                    
+                
+            }
+        }
+    }
+    
+     post {
+        success {
+            echo 'build is success, you can proceed for the bext build'
+        }
+    }
+        
+}
